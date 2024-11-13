@@ -1,0 +1,73 @@
+﻿<!DOCTYPE html>
+<html>
+<head>
+    <title>System Monitoring</title>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/dygraph/2.1.0/dygraph.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/dygraph/2.1.0/dygraph.min.css" />
+    <style>
+        .graph {
+            width: 800px;
+            height: 400px;
+            margin: 20px auto;
+        }
+        .metrics {
+            text-align: center;
+            font-size: 18px;
+            margin: 20px;
+        }
+    </style>
+</head>
+<body>
+<div class="metrics">
+    <div>CPU Usage: <span id="cpu">0</span>%</div>
+    <div>Memory Usage: <span id="memory">0</span>%</div>
+    <div>Current Time: <span id="time">-</span></div>
+</div>
+<div id="graph" class="graph"></div>
+
+<script>
+    let data = [];
+    const maxPoints = 60; // Показувати дані за останнью хвилину
+
+    // графік
+    const graph = new Dygraph(document.getElementById("graph"), data,
+        {
+            labels: ['Time', 'CPU', 'Memory'],
+            title: 'System Resources Usage',
+            ylabel: 'Usage %',
+            xlabel: 'Time',
+            valueRange: [0, 100],
+            animatedZooms: true
+        });
+
+    function updateData() {
+        $.ajax({
+            url: '/api/systemmetrics',
+            method: 'GET',
+            success: function (metrics) {
+                // оновлення значень
+                $('#cpu').text(metrics.cpuUsage.toFixed(2));
+                $('#memory').text(metrics.memoryUsage.toFixed(2));
+                $('#time').text(new Date(metrics.currentTime).toLocaleTimeString());
+
+                // додаємо точку на графік
+                data.push([new Date(metrics.currentTime), metrics.cpuUsage, metrics.memoryUsage]);
+
+                //  кількість точок
+                if (data.length > maxPoints) {
+                    data.shift();
+                }
+
+                // оновлюємо графік
+                graph.updateOptions({ file: data });
+            }
+        });
+    }
+
+    // Обновляем данные каждую секунду
+    setInterval(updateData, 1000);
+    updateData(); // Первое обновление
+</script>
+</body>
+</html>

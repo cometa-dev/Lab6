@@ -1,0 +1,6 @@
+@Lab6_HostAddress = http://localhost:5189
+
+GET {{Lab6_HostAddress}}/api/systemmetrics
+Accept: application/json
+
+###
